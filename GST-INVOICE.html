@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sales-Invoice Generator By Ravin</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      color: #000;
+    }
+
+    .invoice-container {
+      max-width: 800px;
+      margin: 30px auto;
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 40px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid #ccc;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      color: #000;
+      font-size: 28px;
+      margin: 0;
+    }
+
+    header .invoice-logo {
+      font-weight: bold;
+      font-size: 18px;
+      color: #666;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h2 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #000;
+    }
+
+    .section input,
+    .section select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-top: 4px;
+      background-color: #fff;
+      color: #000;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table th,
+    table td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: left;
+    }
+
+    table th {
+      background-color: #f0f0f0;
+    }
+
+    table td input {
+      width: 100%;
+      padding: 6px;
+      border: none;
+      background: transparent;
+      color: #000;
+    }
+
+    table td input:focus {
+      outline: none;
+    }
+
+    .totals {
+      margin-top: 20px;
+      text-align: right;
+    }
+
+    .totals p {
+      margin: 4px 0;
+      font-size: 16px;
+    }
+
+    .print-btn,
+    .no-print {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .print-btn button,
+    .no-print button {
+      background-color: #000;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .print-btn button:hover {
+      background-color: #333;
+    }
+
+    input::placeholder {
+      color: #aaa;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="invoice-container">
+    <header>
+      <h1>INVOICE</h1>
+      <div class="invoice-logo">GST-INVOICE</div>
+    </header>
+
+    <div class="section">
+      <h2>Date:</h2>
+      <input type="date" />
+    </div>
+
+    <div class="section">
+      <h2>Seller Details:</h2>
+      <p>Business Name: <input type="text" placeholder="Enter Business Name" /></p>
+      <p>Contact: <input type="text" placeholder="Enter Contact Number" /></p>
+      <p>Email: <input type="text" placeholder="Enter Email" /></p>
+      <p>GST Number: <input type="text" placeholder="Enter GST Number" /></p>
+    </div>
+
+    <div class="section">
+      <h2>Customer Details:</h2>
+      <p>Name: <input type="text" placeholder="Enter Customer Name" /></p>
+      <p>Address: <input type="text" placeholder="Enter Address" /></p>
+      <p>Contact: <input type="text" placeholder="Enter Contact" /></p>
+    </div>
+
+    <div class="section">
+      <h2>Product Details:</h2>
+      <table id="product-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Rate</th>
+            <th>Total</th>
+            <th class="no-print">Action</th>
+          </tr>
+        </thead>
+        <tbody id="product-body">
+          <tr>
+            <td><input type="text" placeholder="Product Name" /></td>
+            <td><input type="number" value="0" oninput="calculateTotals()" /></td>
+            <td><input type="number" value="0" oninput="calculateTotals()" /></td>
+            <td><input type="text" value="0" readonly /></td>
+            <td class="no-print"><button onclick="removeRow(this)">Remove</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="no-print">
+      <button onclick="addRow()">+ Add Product</button>
+    </div>
+
+    <div class="section">
+      <h2>Currency:</h2>
+      <select id="currency" onchange="calculateTotals()">
+        <option value="₹">₹ (INR)</option>
+        <option value="$">$ (USD)</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <h2>Discount (%):</h2>
+      <input type="number" id="discount" value="0" oninput="calculateTotals()" />
+    </div>
+
+    <div class="section">
+      <h2>Payment Method:</h2>
+      <select>
+        <option value="cash">Cash</option>
+        <option value="card">Card</option>
+        <option value="upi">UPI</option>
+      </select>
+    </div>
+
+    <div class="totals">
+      <p id="subtotal">Subtotal: ₹0.00</p>
+      <p id="gst-amt">GST (3%): ₹0.00</p>
+      <p id="discount-amt">Discount: ₹0.00</p>
+      <p id="grand-total"><strong>Grand Total: ₹0.00</strong></p>
+    </div>
+
+    <div class="print-btn no-print">
+      <button onclick="window.print()">Print Invoice</button>
+    </div>
+  </div>
+
+  <script>
+    function calculateTotals() {
+      const rows = document.querySelectorAll("#product-body tr");
+      let subtotal = 0;
+
+      rows.forEach(row => {
+        const qty = parseFloat(row.cells[1].querySelector('input').value) || 0;
+        const rate = parseFloat(row.cells[2].querySelector('input').value) || 0;
+        const total = qty * rate;
+        row.cells[3].querySelector('input').value = total.toFixed(2);
+        subtotal += total;
+      });
+
+      const gstRate = 0.03;
+      const gstAmount = subtotal * gstRate;
+      const discountPercent = parseFloat(document.getElementById("discount").value) || 0;
+      const discountAmount = subtotal * (discountPercent / 100);
+      const grandTotal = subtotal + gstAmount - discountAmount;
+      const symbol = document.getElementById("currency").value;
+
+      document.getElementById("subtotal").innerText = `Subtotal: ${symbol}${subtotal.toFixed(2)}`;
+      document.getElementById("gst-amt").innerText = `GST (3%): ${symbol}${gstAmount.toFixed(2)}`;
+      document.getElementById("discount-amt").innerText = `Discount: ${symbol}${discountAmount.toFixed(2)}`;
+      document.getElementById("grand-total").innerHTML = `<strong>Grand Total: ${symbol}${grandTotal.toFixed(2)}</strong>`;
+    }
+
+    function addRow() {
+      const tbody = document.getElementById("product-body");
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td><input type="text" placeholder="Product Name" /></td>
+        <td><input type="number" value="0" oninput="calculateTotals()" /></td>
+        <td><input type="number" value="0" oninput="calculateTotals()" /></td>
+        <td><input type="text" value="0" readonly /></td>
+        <td class="no-print"><button onclick="removeRow(this)">Remove</button></td>
+      `;
+
+      tbody.appendChild(row);
+    }
+
+    function removeRow(button) {
+      const row = button.closest("tr");
+      const tbody = document.getElementById("product-body");
+      if (tbody.rows.length > 1) {
+        row.remove();
+        calculateTotals();
+      } else {
+        alert("At least one row is required.");
+      }
+    }
+
+    window.onload = calculateTotals;
+  </script>
+</body>
+
+</html>
